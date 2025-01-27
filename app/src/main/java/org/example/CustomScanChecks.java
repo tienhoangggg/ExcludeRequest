@@ -13,25 +13,38 @@ import java.util.Set;
 
 public class CustomScanChecks implements BurpExtension {
     private MontoyaApi api;
-    private Set<String> excludedMethods = new HashSet<>();
+    private Set<String> excludedMethods;
+    private Set<String> listParam;
 
     @Override
     public void initialize(MontoyaApi api) {
         this.api = api;
         api.extension().setName("Exclude Methods in Scanner");
+
+        // Create a custom tab for user input
         SwingUtilities.invokeLater(() -> {
-            JPanel panel = new JPanel(new BorderLayout());
-            JTextField textField = new JTextField(String.join(",", excludedMethods));
-            JButton button = new JButton("Set Excluded Methods");
+            JPanel panel = new JPanel(new GridLayout(3, 2));
+
+            JTextField methodTextField = new JTextField();
+            JTextField paramTextField = new JTextField();
+
+            JButton button = new JButton("Set Excluded");
 
             button.addActionListener(e -> {
-                String input = textField.getText().trim().toUpperCase();
-                excludedMethods = new HashSet<>(Arrays.asList(input.split(",")));
-                JOptionPane.showMessageDialog(panel, "Excluded methods set to: " + excludedMethods);
+                String methodInput = methodTextField.getText().trim().toUpperCase();
+                excludedMethods = new HashSet<>(Arrays.asList(methodInput.split(",")));
+
+                listParam = new HashSet<>(Arrays.asList(paramTextField.getText().trim().split("&")));
+
+                JOptionPane.showMessageDialog(panel, "Excluded methods set to: " + excludedMethods +
+                        "\nParameters set to: " + listParam);
             });
 
-            panel.add(textField, BorderLayout.PAGE_START);
-            panel.add(button, BorderLayout.AFTER_LAST_LINE);
+            panel.add(new JLabel("Excluded Methods:"));
+            panel.add(methodTextField);
+            panel.add(new JLabel("Parameter Name:"));
+            panel.add(paramTextField);
+            panel.add(button);
 
             api.userInterface().registerSuiteTab("Exclude Methods in Scanner", panel);
         });
@@ -39,8 +52,7 @@ public class CustomScanChecks implements BurpExtension {
         api.http().registerHttpHandler(new HttpHandler() {
             @Override
             public RequestToBeSentAction handleHttpRequestToBeSent(HttpRequestToBeSent requestToBeSent) {
-                if (requestToBeSent.toolSource().isFromTool(ToolType.SCANNER)
-                        && excludedMethods.contains(requestToBeSent.method().toUpperCase())) {
+                if (check(requestToBeSent)) {
                     return RequestToBeSentAction
                             .continueWith(requestToBeSent.withBody("").withPath("/VCS404").withMethod("VCS"));
                 }
@@ -52,5 +64,32 @@ public class CustomScanChecks implements BurpExtension {
                 return ResponseReceivedAction.continueWith(responseReceived);
             }
         });
+    }
+
+    public boolean check(HttpRequestToBeSent requestToBeSent) {
+        if (requestToBeSent.toolSource().isFromTool(ToolType.SCANNER)
+                && excludedMethods.contains(requestToBeSent.method().toUpperCase())) {
+            return true;
+        }
+        // Check if the request has the specified parameter with the specified value
+        for (String param : listParam) {
+            // split param into key and value, split by '=', name is first, value is the
+            // other left
+            String name, value;
+            int index = param.indexOf("=");
+            if (index == -1) {
+                name = param;
+                value = "";
+            } else {
+                name = param.substring(0, index);
+                value = param.substring(index + 1);
+            }
+            // check if the request has the specified parameter with the specified value
+            if (requestToBeSent.parameters().stream()
+                    .anyMatch(p -> p.name().equals(name) && p.value().equals(value))) {
+                return true;
+            }
+        }
+        return false;
     }
 }
