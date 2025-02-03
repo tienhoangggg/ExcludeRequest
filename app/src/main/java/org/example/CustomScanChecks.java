@@ -92,8 +92,10 @@ public class CustomScanChecks implements BurpExtension {
     }
 
     public boolean check(HttpRequestToBeSent requestToBeSent) {
-        if (requestToBeSent.toolSource().isFromTool(ToolType.SCANNER)
-                && excludedMethods.contains(requestToBeSent.method().toUpperCase())) {
+        if (requestToBeSent.toolSource().isFromTool(ToolType.SCANNER)) {
+            return false;
+        }
+        if (excludedMethods.contains(requestToBeSent.method().toUpperCase())) {
             return true;
         }
         // Check if the request has the specified parameter with the specified value
