@@ -23,10 +23,14 @@ public class CustomScanChecks implements BurpExtension {
 
         // Create a custom tab for user input
         SwingUtilities.invokeLater(() -> {
-            JPanel panel = new JPanel(new GridLayout(3, 2));
+            JPanel panel = new JPanel(new BorderLayout(10, 10));
+            JPanel inputPanel = new JPanel(new GridBagLayout());
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
 
             JTextField methodTextField = new JTextField();
+            methodTextField.setPreferredSize(new Dimension(200, 30));
             JTextField paramTextField = new JTextField();
+            paramTextField.setPreferredSize(new Dimension(200, 30));
 
             JButton button = new JButton("Set Excluded");
 
@@ -40,11 +44,32 @@ public class CustomScanChecks implements BurpExtension {
                         "\nParameters set to: " + listParam);
             });
 
-            panel.add(new JLabel("Excluded Methods:"));
-            panel.add(methodTextField);
-            panel.add(new JLabel("Parameter Name:"));
-            panel.add(paramTextField);
-            panel.add(button);
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.insets = new Insets(5, 5, 5, 5);
+
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            gbc.weightx = 0.1;
+            inputPanel.add(new JLabel("Excluded Methods:"), gbc);
+
+            gbc.gridx = 1;
+            gbc.weightx = 1.0;
+            inputPanel.add(methodTextField, gbc);
+
+            gbc.gridx = 0;
+            gbc.gridy = 1;
+            gbc.weightx = 0.1;
+            inputPanel.add(new JLabel("Parameter Name:"), gbc);
+
+            gbc.gridx = 1;
+            gbc.weightx = 1.0;
+            inputPanel.add(paramTextField, gbc);
+
+            buttonPanel.add(button);
+
+            panel.add(inputPanel, BorderLayout.NORTH);
+            panel.add(buttonPanel, BorderLayout.SOUTH);
 
             api.userInterface().registerSuiteTab("Exclude Methods in Scanner", panel);
         });
