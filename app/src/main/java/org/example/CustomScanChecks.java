@@ -31,17 +31,26 @@ public class CustomScanChecks implements BurpExtension {
             methodTextField.setPreferredSize(new Dimension(200, 30));
             JTextField paramTextField = new JTextField();
             paramTextField.setPreferredSize(new Dimension(200, 30));
+            JTextField infoTextField = new JTextField("status: Off");
+            infoTextField.setPreferredSize(new Dimension(200, 30));
+            infoTextField.setEditable(false);
 
-            JButton button = new JButton("Set Excluded");
+            JToggleButton toggleButton = new JToggleButton("On");
 
-            button.addActionListener(e -> {
-                String methodInput = methodTextField.getText().trim().toUpperCase();
-                excludedMethods = new HashSet<>(Arrays.asList(methodInput.split(",")));
-
-                listParam = new HashSet<>(Arrays.asList(paramTextField.getText().trim().split("&")));
-
-                JOptionPane.showMessageDialog(panel, "Excluded methods set to: " + excludedMethods +
-                        "\nParameters set to: " + listParam);
+            toggleButton.addActionListener(e -> {
+                if (toggleButton.isSelected()) {
+                    String methodInput = methodTextField.getText().trim().toUpperCase();
+                    excludedMethods = new HashSet<>(Arrays.asList(methodInput.split(",")));
+                    listParam = new HashSet<>(Arrays.asList(paramTextField.getText().trim().split("&")));
+                    toggleButton.setText("Off");
+                    infoTextField.setText("status: On | Methods: " + excludedMethods
+                            + " OR Parameter: " + listParam);
+                } else {
+                    toggleButton.setText("On");
+                    infoTextField.setText("status: Off");
+                    excludedMethods = new HashSet<>();
+                    listParam = new HashSet<>();
+                }
             });
 
             GridBagConstraints gbc = new GridBagConstraints();
@@ -66,7 +75,16 @@ public class CustomScanChecks implements BurpExtension {
             gbc.weightx = 1.0;
             inputPanel.add(paramTextField, gbc);
 
-            buttonPanel.add(button);
+            gbc.gridx = 0;
+            gbc.gridy = 2;
+            gbc.weightx = 0.1;
+            inputPanel.add(new JLabel("Info:"), gbc);
+
+            gbc.gridx = 1;
+            gbc.weightx = 1.0;
+            inputPanel.add(infoTextField, gbc);
+
+            buttonPanel.add(toggleButton);
 
             panel.add(inputPanel, BorderLayout.NORTH);
             panel.add(buttonPanel, BorderLayout.SOUTH);
