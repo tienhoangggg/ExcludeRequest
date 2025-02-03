@@ -92,7 +92,7 @@ public class CustomScanChecks implements BurpExtension {
     }
 
     public boolean check(HttpRequestToBeSent requestToBeSent) {
-        if (requestToBeSent.toolSource().isFromTool(ToolType.SCANNER)) {
+        if (!requestToBeSent.toolSource().isFromTool(ToolType.SCANNER)) {
             return false;
         }
         if (excludedMethods.contains(requestToBeSent.method().toUpperCase())) {
